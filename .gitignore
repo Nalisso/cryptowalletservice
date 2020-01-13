@@ -1,3 +1,13 @@
+# Maven generated files
+Target/
+
+# IntelliJ IDEA files
+.idea/
+.settings/
+.classpath
+.project
+.springBeans
+
 # Compiled class file
 *.class
 
