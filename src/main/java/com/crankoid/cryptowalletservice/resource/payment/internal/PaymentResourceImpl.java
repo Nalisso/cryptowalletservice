@@ -8,7 +8,9 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.wallet.Wallet;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class PaymentResourceImpl implements PaymentResource {
     private final BlockchainService blockchainService;
     private final WalletService walletService;
