@@ -26,15 +26,12 @@ public class WalletResourceImpl implements WalletResource {
 
     static ObjectMapper mapper = new ObjectMapper();
 
-    private final BlockchainService blockchainService;
     private final JdbcTemplate jdbcTemplate;
     private final WalletService walletService;
 
     public WalletResourceImpl(JdbcTemplate jdbcTemplate,
-                              BlockchainService blockchainService,
                               WalletService walletService) {
         this.jdbcTemplate = jdbcTemplate;
-        this.blockchainService = blockchainService;
         this.walletService = walletService;
     }
 
@@ -45,7 +42,7 @@ public class WalletResourceImpl implements WalletResource {
             throw new IllegalArgumentException("illegal length of userId");
         }
         try {
-            Wallet wallet = createNewWallet();
+            Wallet wallet = walletService.createNewWallet();
             DeterministicSeed seed = wallet.getKeyChainSeed();
             WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
             //blockchainService.getPeerGroup().addWallet(wallet);
@@ -77,9 +74,5 @@ public class WalletResourceImpl implements WalletResource {
         walletDTO.setBalance(balanceDTO);
         walletDTO.setUserId(userId);
         return walletDTO;
-    }
-
-    private Wallet createNewWallet() {
-        return Wallet.createDeterministic(BitcoinNetwork.get(), Script.ScriptType.P2PKH);
     }
 }

@@ -20,6 +20,10 @@ public class WalletService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    public Wallet createNewWallet() {
+        return Wallet.createDeterministic(BitcoinNetwork.get(), Script.ScriptType.P2PKH);
+    }
+
     public Wallet getWalletFromUserId(String userId){
         try {
             String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
