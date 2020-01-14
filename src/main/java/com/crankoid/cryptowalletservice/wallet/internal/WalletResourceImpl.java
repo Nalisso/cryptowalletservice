@@ -91,9 +91,9 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     @Override
-    public WalletDTO getWallet(String userId) {
+    public WalletDTO getWallet(UserId userId) {
         String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
-                new Object[]{userId}, String.class);
+                new Object[]{userId.getUserId()}, String.class);
         try {
             WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
             DeterministicSeed seed = new DeterministicSeed(
@@ -101,7 +101,7 @@ public class WalletResourceImpl implements WalletResource {
                     walletSeed.getMnemonicCode(),
                     walletSeed.getCreationTimeSeconds());
             Wallet wallet = Wallet.fromSeed(networkStrategy.getNetwork(), seed, Script.ScriptType.P2PKH);
-            return convertWallet(wallet, userId);
+            return convertWallet(wallet, userId.getUserId());
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
