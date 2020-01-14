@@ -2,6 +2,7 @@ package com.crankoid.cryptowalletservice.resource.payment.internal;
 
 import com.crankoid.cryptowalletservice.resource.payment.api.PaymentResource;
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
+import com.crankoid.cryptowalletservice.service.wallet.WalletService;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -10,16 +11,19 @@ import org.bitcoinj.wallet.Wallet;
 
 public class PaymentResourceImpl implements PaymentResource {
     private final BlockchainService blockchainService;
+    private final WalletService walletService;
 
-    public PaymentResourceImpl(BlockchainService blockchainService) {
+    public PaymentResourceImpl(BlockchainService blockchainService,
+                               WalletService walletService) {
         this.blockchainService = blockchainService;
+        this.walletService = walletService;
     }
 
     @Override
     public String sendBitcoinPayment(String sourceUserId, String destinationUserId, String satoshiAmount) {
         try {
-            Wallet walletSend = getWalletFromUserId(sourceUserId);
-            Wallet walletReceive = getWalletFromUserId(destinationUserId);
+            Wallet walletSend = walletService.getWalletFromUserId(sourceUserId);
+            Wallet walletReceive = walletService.getWalletFromUserId(destinationUserId);
             Address targetAddress = walletReceive.currentReceiveAddress();
             Coin amount = Coin.parseCoin(satoshiAmount);
             Wallet.SendResult result = walletSend.sendCoins(blockchainService.getPeerGroup(), targetAddress, amount);
@@ -29,9 +33,5 @@ public class PaymentResourceImpl implements PaymentResource {
             e.printStackTrace();
             return "Insufficient Money :(";
         }
-    }
-
-    private Wallet getWalletFromUserId(String userId) {
-        return null;
     }
 }
