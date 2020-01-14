@@ -1,7 +1,10 @@
 package com.crankoid.cryptowalletservice.wallet.internal;
 
 import com.crankoid.cryptowalletservice.wallet.api.WalletResource;
+import com.crankoid.cryptowalletservice.wallet.api.dao.WalletSeed;
+import com.crankoid.cryptowalletservice.wallet.api.dto.BalanceDTO;
 import com.crankoid.cryptowalletservice.wallet.api.dto.UserId;
+import com.crankoid.cryptowalletservice.wallet.api.dto.WalletDTO;
 import com.crankoid.cryptowalletservice.wallet.internal.utilities.NetworkStrategy;
 import com.crankoid.cryptowalletservice.wallet.internal.utilities.TestNetworkStrategy;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,6 +38,8 @@ public class WalletResourceImpl implements WalletResource {
     private Wallet walletSend = createNewWallet();
     private Wallet walletReceive = createNewWallet();
     private PeerGroup peerGroup;
+    private BlockStore blockStore;
+    private BlockChain blockchain;
     JdbcTemplate jdbcTemplate;
 
     static ObjectMapper mapper = new ObjectMapper();
@@ -45,8 +50,23 @@ public class WalletResourceImpl implements WalletResource {
 
 
     @Override
-    public String initBlockchain() {
-        return null;
+    public String initBlockchainFile() {
+        try {
+            blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
+            blockchain = new BlockChain(networkStrategy.getNetwork(), blockStore);
+            updateLocalBlockchain();
+        } catch (BlockStoreException e) {
+            e.printStackTrace();
+        }
+        return "OK";
+    }
+
+    private void updateLocalBlockchain() {
+        peerGroup = new PeerGroup(networkStrategy.getNetwork(), blockchain);
+        peerGroup.setUserAgent("cryptowalletservice", "0.1");
+        peerGroup.addPeerDiscovery(new DnsDiscovery(networkStrategy.getNetwork()));
+        peerGroup.start();
+        peerGroup.downloadBlockChain();
     }
 
     @Override
@@ -56,38 +76,46 @@ public class WalletResourceImpl implements WalletResource {
             throw new IllegalArgumentException("illegal length of userId");
         }
         try {
-            jdbcTemplate.update("INSERT INTO wallet (refid, keyValue) VALUES(?,?)", userId.getUserId(), mapper.writeValueAsString(createNewWallet().getKeyChainSeed()));
+            Wallet wallet = createNewWallet();
+            DeterministicSeed seed = wallet.getKeyChainSeed();
+            WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
+            peerGroup.addWallet(wallet);
+            jdbcTemplate.update(
+                    "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
+                    userId.getUserId(),
+                    mapper.writeValueAsString(walletSeed));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
         return "OK";
     }
 
-    private void generateWallet123(String userId) {
-        Wallet wallet = createNewWallet();
-        //spara userId - wallet
+    @Override
+    public WalletDTO getWallet(String userId) {
+        String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
+                new Object[]{userId}, String.class);
+        try {
+            WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
+            DeterministicSeed seed = new DeterministicSeed(
+                    walletSeed.getSeed(),
+                    walletSeed.getMnemonicCode(),
+                    walletSeed.getCreationTimeSeconds());
+            Wallet wallet = Wallet.fromSeed(networkStrategy.getNetwork(), seed, Script.ScriptType.P2PKH);
+            return convertWallet(wallet, userId);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    @Override
-    public String getWalletInformation(UserId userId) {
-        /*
-        try {
-            BlockStore blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
-            BlockChain blockchain = new BlockChain(networkStrategy.getNetwork(), walletSend, blockStore);
-            peerGroup = new PeerGroup(networkStrategy.getNetwork(), blockchain);
-            peerGroup.setUserAgent("test", "1.0");
-            peerGroup.addPeerDiscovery(new DnsDiscovery(networkStrategy.getNetwork()));
-            peerGroup.addWallet(walletSend);
-            peerGroup.addWallet(walletReceive);
-            peerGroup.start();
-            peerGroup.downloadBlockChain();
-            System.out.println("Vi har en blockkedja!");
-        } catch (BlockStoreException e) {
-            e.printStackTrace();
-        }
-        return walletSend.toString() + "\n\n\n\n" + walletReceive.toString();
-         */
-        return null;
+    private WalletDTO convertWallet(Wallet wallet, String userId) {
+        WalletDTO walletDTO = new WalletDTO();
+        BalanceDTO balanceDTO = new BalanceDTO();
+        walletDTO.setAddress(wallet.currentReceiveAddress().toString());
+        balanceDTO.setAvailable(wallet.getBalance(Wallet.BalanceType.AVAILABLE).value);
+        balanceDTO.setEstimated(wallet.getBalance(Wallet.BalanceType.ESTIMATED).value);
+        walletDTO.setBalance(balanceDTO);
+        walletDTO.setUserId(userId);
+        return walletDTO;
     }
 
     @Override
