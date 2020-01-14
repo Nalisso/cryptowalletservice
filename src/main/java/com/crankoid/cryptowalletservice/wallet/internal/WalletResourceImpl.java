@@ -118,12 +118,13 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     @Override
-    public String sendBitcoinPayment(String sourceUserId, String destinationUserId, BigInteger satoshiAmount) {
+    public String sendBitcoinPayment(String sourceUserId, String destinationUserId, String satoshiAmount) {
         try {
             Wallet walletSend = getWalletFromUserId(sourceUserId);
             Wallet walletReceive = getWalletFromUserId(destinationUserId);
             Address targetAddress = walletReceive.currentReceiveAddress();
-            Wallet.SendResult result = walletSend.sendCoins(peerGroup, targetAddress, Coin.MILLICOIN);
+            Coin amount = Coin.parseCoin(satoshiAmount);
+            Wallet.SendResult result = walletSend.sendCoins(peerGroup, targetAddress, amount);
             TransactionBroadcast transactionBroadcast = result.broadcast;
             return "OK";
         } catch (InsufficientMoneyException e) {
