@@ -13,6 +13,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class WalletService {
 
@@ -42,6 +45,35 @@ public class WalletService {
         } catch(EmptyResultDataAccessException e) {
             throw new UserNotFoundException();
         }
+    }
+
+    public List<Wallet> getAllWallets(){
+        try {
+            List<String> result = jdbcTemplate.queryForList("SELECT keyValue FROM wallet", String.class);
+            return convertToWallet(result);
+        } catch(EmptyResultDataAccessException e) {
+            throw new UserNotFoundException();
+        }
+    }
+
+    private List<Wallet> convertToWallet(List<String> resultSet){
+        List<Wallet> wallets = new ArrayList<>();
+        resultSet.stream().forEach(result -> {
+            try {
+                WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
+                DeterministicSeed seed = new DeterministicSeed(
+                        walletSeed.getSeed(),
+                        walletSeed.getMnemonicCode(),
+                        walletSeed.getCreationTimeSeconds());
+                wallets.add(Wallet.fromSeed(BitcoinNetwork.get(), seed, Script.ScriptType.P2PKH));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        });
+        if (wallets.isEmpty()){
+            wallets.add(createNewWallet());
+        }
+        return wallets;
     }
 
     @ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "User not found")

@@ -26,14 +26,12 @@ public class WalletResourceImpl implements WalletResource {
 
     private final JdbcTemplate jdbcTemplate;
     private final WalletService walletService;
-    private final BlockchainService blockchainService;
+    private Wallet wallet;
 
     public WalletResourceImpl(JdbcTemplate jdbcTemplate,
-                              WalletService walletService,
-                              BlockchainService blockchainService) {
+                              WalletService walletService) {
         this.jdbcTemplate = jdbcTemplate;
         this.walletService = walletService;
-        this.blockchainService = blockchainService;
     }
 
     @Override
@@ -43,10 +41,14 @@ public class WalletResourceImpl implements WalletResource {
             throw new IllegalArgumentException("illegal length of userId");
         }
         try {
+            if (wallet == null) {
+                wallet = walletService.createNewWallet();
+            } else {
+                System.out.println(wallet.toString());
+            }
             Wallet wallet = walletService.createNewWallet();
             DeterministicSeed seed = wallet.getKeyChainSeed();
             WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
-            blockchainService.getPeerGroup().addWallet(wallet);
             jdbcTemplate.update(
                     "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
                     userId.getUserId(),
