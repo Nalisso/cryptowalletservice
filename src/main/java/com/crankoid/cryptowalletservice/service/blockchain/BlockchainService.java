@@ -16,7 +16,6 @@ import java.io.File;
 @Service
 public class BlockchainService {
 
-    private BlockStore blockStore;
     private BlockChain blockchain;
     private PeerGroup peerGroup;
     private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
@@ -27,7 +26,7 @@ public class BlockchainService {
 
     public void updateBlockchainFile() {
         try {
-            blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
+            BlockStore blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
             blockchain = new BlockChain(networkStrategy.getNetwork(), blockStore);
             updateLocalBlockchain();
         } catch (BlockStoreException e) {
@@ -35,6 +34,7 @@ public class BlockchainService {
         }
     }
 
+    
     private void updateLocalBlockchain() {
         peerGroup = new PeerGroup(networkStrategy.getNetwork(), blockchain);
         peerGroup.setUserAgent("cryptowalletservice", "0.1");
