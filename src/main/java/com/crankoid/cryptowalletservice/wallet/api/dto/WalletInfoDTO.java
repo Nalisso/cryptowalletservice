@@ -1,15 +1,15 @@
 package com.crankoid.cryptowalletservice.wallet.api.dto;
 
 public class WalletInfoDTO {
-    private byte[] address;
+    private String address;
     private String publicKey;
     private Long availableSatoshis;
 
-    public byte[] getAddress() {
+    public String getAddress() {
         return address;
     }
 
-    public void setAddress(byte[] address) {
+    public void setAddress(String address) {
         this.address = address;
     }
 
