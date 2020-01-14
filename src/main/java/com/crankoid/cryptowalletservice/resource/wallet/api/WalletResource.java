@@ -21,7 +21,7 @@ public interface WalletResource {
     @PostMapping("/send")
     String sendBitcoinPayment(@RequestBody(required = true) String sourceUserId,
                               @RequestBody(required = true) String destinationUserId,
-                              @RequestBody(required = true) BigInteger satoshiAmount);
+                              @RequestBody(required = true) String satoshiAmount);
 
 
 }
