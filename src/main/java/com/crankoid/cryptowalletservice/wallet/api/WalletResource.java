@@ -14,7 +14,7 @@ public interface WalletResource {
     WalletInfoInsecureDTO generateWallet(String userId);
 
     @PostMapping("/information")
-    WalletInfoDTO getWalletInformation(String userId);
+    String getWalletInformation(String userId);
 
     @PostMapping("/send")
     String sendBitcoinPayment(String sourceUserId, String destinationUserId, BigInteger satoshiAmount);
