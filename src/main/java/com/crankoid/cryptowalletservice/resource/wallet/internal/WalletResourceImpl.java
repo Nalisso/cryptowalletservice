@@ -10,23 +10,17 @@ import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.TestN
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
-
-
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
+    
     private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
 
     JdbcTemplate jdbcTemplate;
@@ -94,22 +88,6 @@ public class WalletResourceImpl implements WalletResource {
         walletDTO.setBalance(balanceDTO);
         walletDTO.setUserId(userId);
         return walletDTO;
-    }
-
-    @Override
-    public String sendBitcoinPayment(String sourceUserId, String destinationUserId, String satoshiAmount) {
-        try {
-            Wallet walletSend = getWalletFromUserId(sourceUserId);
-            Wallet walletReceive = getWalletFromUserId(destinationUserId);
-            Address targetAddress = walletReceive.currentReceiveAddress();
-            Coin amount = Coin.parseCoin(satoshiAmount);
-            Wallet.SendResult result = walletSend.sendCoins(blockchainService.getPeerGroup(), targetAddress, amount);
-            TransactionBroadcast transactionBroadcast = result.broadcast;
-            return "OK";
-        } catch (InsufficientMoneyException e) {
-            e.printStackTrace();
-            return "Insufficient Money :(";
-        }
     }
 
     private Wallet createNewWallet() {
