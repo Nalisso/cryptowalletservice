@@ -1,23 +1,23 @@
 package com.crankoid.cryptowalletservice.wallet.internal;
 
 import com.crankoid.cryptowalletservice.wallet.api.WalletResource;
-import com.crankoid.cryptowalletservice.wallet.api.dto.WalletInfoInsecureDTO;
+import com.crankoid.cryptowalletservice.wallet.api.dto.UserId;
 import com.crankoid.cryptowalletservice.wallet.internal.utilities.NetworkStrategy;
 import com.crankoid.cryptowalletservice.wallet.internal.utilities.TestNetworkStrategy;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
@@ -37,32 +37,40 @@ public class WalletResourceImpl implements WalletResource {
     private PeerGroup peerGroup;
     JdbcTemplate jdbcTemplate;
 
+    static ObjectMapper mapper = new ObjectMapper();
+
     public WalletResourceImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
 
     @Override
-    public WalletInfoInsecureDTO generateWallet(String userId) {
-
-        WalletInfoInsecureDTO walletInfoInsecureDTO = new WalletInfoInsecureDTO();
-        ecKey = new ECKey();
-
-        
-
-        jdbcTemplate.update("INSERT INTO wallet (refid, keyValue) VALUES(?,?)", userId, "");
-
-        walletInfoInsecureDTO.setPrivateKey(ecKey.getPrivateKeyAsHex());
-        return walletInfoInsecureDTO;
+    public String initBlockchain() {
+        return null;
     }
-    
-    private void generateWallet123(String userId){
+
+    @Override
+    public String generateWallet(UserId userId) {
+        System.out.println("userid: " + userId);
+        if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
+            throw new IllegalArgumentException("illegal length of userId");
+        }
+        try {
+            jdbcTemplate.update("INSERT INTO wallet (refid, keyValue) VALUES(?,?)", userId.getUserId(), mapper.writeValueAsString(createNewWallet().getKeyChainSeed()));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+        return "OK";
+    }
+
+    private void generateWallet123(String userId) {
         Wallet wallet = createNewWallet();
         //spara userId - wallet
     }
 
     @Override
-    public String getWalletInformation(String userId) {
+    public String getWalletInformation(UserId userId) {
+        /*
         try {
             BlockStore blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
             BlockChain blockchain = new BlockChain(networkStrategy.getNetwork(), walletSend, blockStore);
@@ -78,6 +86,8 @@ public class WalletResourceImpl implements WalletResource {
             e.printStackTrace();
         }
         return walletSend.toString() + "\n\n\n\n" + walletReceive.toString();
+         */
+        return null;
     }
 
     @Override
@@ -86,7 +96,7 @@ public class WalletResourceImpl implements WalletResource {
             Address targetAddress = walletReceive.currentReceiveAddress();
             Wallet.SendResult result = walletSend.sendCoins(peerGroup, targetAddress, Coin.MILLICOIN);
             TransactionBroadcast transactionBroadcast = result.broadcast;
-            return "success";
+            return "OK";
         } catch (InsufficientMoneyException e) {
             e.printStackTrace();
             return "Insufficient Money :(";
