@@ -1,4 +1,4 @@
-package com.crankoid.cryptowalletservice.wallet.internal.utilities;
+package com.crankoid.cryptowalletservice.resource.wallet.internal.utilities;
 
 import org.bitcoinj.core.NetworkParameters;
 

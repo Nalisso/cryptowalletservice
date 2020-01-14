@@ -1,29 +1,24 @@
-package com.crankoid.cryptowalletservice.wallet.internal;
+package com.crankoid.cryptowalletservice.resource.wallet.internal;
 
-import com.crankoid.cryptowalletservice.wallet.api.WalletResource;
-import com.crankoid.cryptowalletservice.wallet.api.dao.WalletSeed;
-import com.crankoid.cryptowalletservice.wallet.api.dto.BalanceDTO;
-import com.crankoid.cryptowalletservice.wallet.api.dto.UserId;
-import com.crankoid.cryptowalletservice.wallet.api.dto.WalletDTO;
-import com.crankoid.cryptowalletservice.wallet.internal.utilities.NetworkStrategy;
-import com.crankoid.cryptowalletservice.wallet.internal.utilities.TestNetworkStrategy;
+import com.crankoid.cryptowalletservice.resource.wallet.api.WalletResource;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dao.WalletSeed;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.UserId;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.NetworkStrategy;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.TestNetworkStrategy;
+import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bitcoinj.core.*;
-import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.File;
 import java.math.BigInteger;
 
 @RestController()
@@ -32,37 +27,17 @@ public class WalletResourceImpl implements WalletResource {
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
-
-    private ECKey ecKey = null;
     private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
-    private PeerGroup peerGroup;
-    private BlockStore blockStore;
-    private BlockChain blockchain;
-    JdbcTemplate jdbcTemplate;
 
+    JdbcTemplate jdbcTemplate;
     static ObjectMapper mapper = new ObjectMapper();
 
-    public WalletResourceImpl(JdbcTemplate jdbcTemplate) {
+    private final BlockchainService blockchainService;
+
+    public WalletResourceImpl(JdbcTemplate jdbcTemplate,
+                              BlockchainService blockchainService) {
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public String updateBlockchainFile() {
-        try {
-            blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
-            blockchain = new BlockChain(networkStrategy.getNetwork(), blockStore);
-            updateLocalBlockchain();
-        } catch (BlockStoreException e) {
-            e.printStackTrace();
-        }
-        return "OK";
-    }
-
-    private void updateLocalBlockchain() {
-        peerGroup = new PeerGroup(networkStrategy.getNetwork(), blockchain);
-        peerGroup.setUserAgent("cryptowalletservice", "0.1");
-        peerGroup.addPeerDiscovery(new DnsDiscovery(networkStrategy.getNetwork()));
-        peerGroup.start();
-        peerGroup.downloadBlockChain();
+        this.blockchainService = blockchainService;
     }
 
     @Override
@@ -75,7 +50,7 @@ public class WalletResourceImpl implements WalletResource {
             Wallet wallet = createNewWallet();
             DeterministicSeed seed = wallet.getKeyChainSeed();
             WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
-            peerGroup.addWallet(wallet);
+            blockchainService.getPeerGroup().addWallet(wallet);
             jdbcTemplate.update(
                     "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
                     userId.getUserId(),
@@ -123,7 +98,7 @@ public class WalletResourceImpl implements WalletResource {
             Wallet walletSend = getWalletFromUserId(sourceUserId);
             Wallet walletReceive = getWalletFromUserId(destinationUserId);
             Address targetAddress = walletReceive.currentReceiveAddress();
-            Wallet.SendResult result = walletSend.sendCoins(peerGroup, targetAddress, Coin.MILLICOIN);
+            Wallet.SendResult result = walletSend.sendCoins(blockchainService.getPeerGroup(), targetAddress, Coin.MILLICOIN);
             TransactionBroadcast transactionBroadcast = result.broadcast;
             return "OK";
         } catch (InsufficientMoneyException e) {

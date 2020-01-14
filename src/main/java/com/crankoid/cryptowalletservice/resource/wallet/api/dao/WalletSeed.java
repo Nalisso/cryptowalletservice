@@ -1,4 +1,4 @@
-package com.crankoid.cryptowalletservice.wallet.api.dao;
+package com.crankoid.cryptowalletservice.resource.wallet.api.dao;
 
 import java.util.List;
 

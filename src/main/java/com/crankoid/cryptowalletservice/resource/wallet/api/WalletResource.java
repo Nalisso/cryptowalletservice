@@ -1,7 +1,7 @@
-package com.crankoid.cryptowalletservice.wallet.api;
+package com.crankoid.cryptowalletservice.resource.wallet.api;
 
-import com.crankoid.cryptowalletservice.wallet.api.dto.WalletDTO;
-import com.crankoid.cryptowalletservice.wallet.api.dto.UserId;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.UserId;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

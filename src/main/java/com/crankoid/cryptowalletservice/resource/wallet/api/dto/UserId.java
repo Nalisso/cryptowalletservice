@@ -1,4 +1,4 @@
-package com.crankoid.cryptowalletservice.wallet.api.dto;
+package com.crankoid.cryptowalletservice.resource.wallet.api.dto;
 
 public class UserId {
 

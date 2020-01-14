@@ -1,4 +1,4 @@
-package com.crankoid.cryptowalletservice.health;
+package com.crankoid.cryptowalletservice.resource.health;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
