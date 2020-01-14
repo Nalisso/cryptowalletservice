@@ -5,7 +5,10 @@ import com.crankoid.cryptowalletservice.wallet.api.dto.WalletInfoDTO;
 import com.crankoid.cryptowalletservice.wallet.api.dto.WalletInfoInsecureDTO;
 import com.crankoid.cryptowalletservice.wallet.internal.utilities.NetworkStrategy;
 import com.crankoid.cryptowalletservice.wallet.internal.utilities.TestNetworkStrategy;
-import com.sun.org.apache.bcel.internal.util.ClassPath;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.script.Script;
@@ -14,7 +17,9 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
@@ -24,13 +29,29 @@ import java.math.BigInteger;
 @RestController()
 public class WalletResourceImpl implements WalletResource {
 
+
+    @Value("${spring.datasource.url}")
+    private String dbUrl;
+
     private ECKey ecKey = null;
     private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
 
+    JdbcTemplate jdbcTemplate;
+
+    public WalletResourceImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     @Override
     public WalletInfoInsecureDTO generateWallet(String userId) {
+
         WalletInfoInsecureDTO walletInfoInsecureDTO = new WalletInfoInsecureDTO();
         ecKey = new ECKey();
+
+        
+
+        jdbcTemplate.update("INSERT INTO wallet (refid, keyValue) VALUES(?,?)", userId, "");
+
         walletInfoInsecureDTO.setPrivateKey(ecKey.getPrivateKeyAsHex());
         walletInfoInsecureDTO.setWalletInfoDTO(getWalletInformation(userId));
         return walletInfoInsecureDTO;
@@ -72,4 +93,5 @@ public class WalletResourceImpl implements WalletResource {
             return "error";
         }
     }
+
 }
