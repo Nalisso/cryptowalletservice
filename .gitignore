@@ -7,6 +7,7 @@ Target/
 .classpath
 .project
 .springBeans
+*.iml
 
 # Compiled class file
 *.class
