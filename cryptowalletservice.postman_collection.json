@@ -1,0 +1,107 @@
+{
+	"info": {
+		"_postman_id": "6f81f1ef-fd75-404c-af1b-5d0d36a870f5",
+		"name": "cryptowalletservice",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create wallet",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"userId\":\"mada42\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://cryptowalletservice.herokuapp.com/wallet",
+					"protocol": "http",
+					"host": [
+						"cryptowalletservice",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"wallet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get wallet",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete wallet",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "cryptowalletservice.herokuapp.com/wallet/mada42",
+					"host": [
+						"cryptowalletservice",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"wallet",
+						"mada42"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send payment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "localhost:8080/payment",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"payment"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
