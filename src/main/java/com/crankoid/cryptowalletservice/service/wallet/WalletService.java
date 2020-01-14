@@ -7,8 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 @Service
 public class WalletService {
@@ -36,7 +39,12 @@ public class WalletService {
             return Wallet.fromSeed(BitcoinNetwork.get(), seed, Script.ScriptType.P2PKH);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
+        } catch(EmptyResultDataAccessException e) {
+            throw new UserNotFoundException();
         }
     }
 
+    @ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "User not found")
+    public class UserNotFoundException extends RuntimeException {
+    }
 }
