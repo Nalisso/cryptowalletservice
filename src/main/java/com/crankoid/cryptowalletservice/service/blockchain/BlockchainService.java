@@ -2,6 +2,7 @@ package com.crankoid.cryptowalletservice.service.blockchain;
 
 import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.BitcoinNetwork;
 import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
@@ -16,7 +17,6 @@ import java.io.File;
 @Service
 public class BlockchainService {
 
-    private BlockChain blockchain;
     private PeerGroup peerGroup;
 
     public BlockchainService(){
@@ -26,23 +26,22 @@ public class BlockchainService {
     public void createBlockchainFile() {
         try {
             BlockStore blockStore = new SPVBlockStore(BitcoinNetwork.get(), new File(new ClassPathResource("local_blockchain").getPath()));
-            blockchain = new BlockChain(BitcoinNetwork.get(), blockStore);
+            BlockChain blockchain = new BlockChain(BitcoinNetwork.get(), blockStore);
+            peerGroup = new PeerGroup(Context.get(), blockchain);
+            peerGroup.setUserAgent("cryptowalletservice", "0.1");
+            peerGroup.addPeerDiscovery(new DnsDiscovery(BitcoinNetwork.get()));
+            peerGroup.start();
             updateLocalBlockchain();
         } catch (BlockStoreException e) {
             e.printStackTrace();
         }
     }
 
-    @Scheduled(fixedRate = 30 * 1000, initialDelay = 90 * 1000)
+    @Scheduled(fixedRate = 10 * 60 * 1000, initialDelay = 90_000)
     private void updateLocalBlockchain() {
-        long ms = System.currentTimeMillis();
-        System.out.println("Start refreshing blockchain");
-        peerGroup = new PeerGroup(BitcoinNetwork.get(), blockchain);
-        peerGroup.setUserAgent("cryptowalletservice", "0.1");
-        peerGroup.addPeerDiscovery(new DnsDiscovery(BitcoinNetwork.get()));
-        peerGroup.start();
+        System.out.println("Refreshing blockchain");
         peerGroup.downloadBlockChain();
-        System.out.println("Refreshing blockchain completed in " + (System.currentTimeMillis() - ms) + " ms");
+        System.out.println("Blockchain refreshed");
     }
 
     public PeerGroup getPeerGroup(){

@@ -5,6 +5,7 @@ import com.crankoid.cryptowalletservice.resource.wallet.api.dao.WalletSeed;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.UserId;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
+import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,11 +26,14 @@ public class WalletResourceImpl implements WalletResource {
 
     private final JdbcTemplate jdbcTemplate;
     private final WalletService walletService;
+    private final BlockchainService blockchainService;
 
     public WalletResourceImpl(JdbcTemplate jdbcTemplate,
-                              WalletService walletService) {
+                              WalletService walletService,
+                              BlockchainService blockchainService) {
         this.jdbcTemplate = jdbcTemplate;
         this.walletService = walletService;
+        this.blockchainService = blockchainService;
     }
 
     @Override
@@ -42,7 +46,7 @@ public class WalletResourceImpl implements WalletResource {
             Wallet wallet = walletService.createNewWallet();
             DeterministicSeed seed = wallet.getKeyChainSeed();
             WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
-            //blockchainService.getPeerGroup().addWallet(wallet);
+            blockchainService.getPeerGroup().addWallet(wallet);
             jdbcTemplate.update(
                     "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
                     userId.getUserId(),
