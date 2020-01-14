@@ -15,11 +15,11 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.math.BigInteger;
+import org.springframework.web.client.HttpClientErrorException;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
@@ -41,7 +41,7 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     @Override
-    public String generateWallet(UserId userId) {
+    public void generateWallet(UserId userId) {
         System.out.println("userid: " + userId);
         if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
             throw new IllegalArgumentException("illegal length of userId");
@@ -50,7 +50,7 @@ public class WalletResourceImpl implements WalletResource {
             Wallet wallet = createNewWallet();
             DeterministicSeed seed = wallet.getKeyChainSeed();
             WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
-            blockchainService.getPeerGroup().addWallet(wallet);
+            //blockchainService.getPeerGroup().addWallet(wallet);
             jdbcTemplate.update(
                     "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
                     userId.getUserId(),
@@ -58,7 +58,6 @@ public class WalletResourceImpl implements WalletResource {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
-        return "OK";
     }
 
     @Override
@@ -67,16 +66,16 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     private Wallet getWalletFromUserId(String userId){
-        String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
-                new Object[]{userId}, String.class);
         try {
+            String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
+                    new Object[]{userId}, String.class);
             WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
             DeterministicSeed seed = new DeterministicSeed(
                     walletSeed.getSeed(),
                     walletSeed.getMnemonicCode(),
                     walletSeed.getCreationTimeSeconds());
             return Wallet.fromSeed(networkStrategy.getNetwork(), seed, Script.ScriptType.P2PKH);
-        } catch (JsonProcessingException e) {
+        } catch (JsonProcessingException  e) {
             throw new IllegalStateException(e);
         }
     }
