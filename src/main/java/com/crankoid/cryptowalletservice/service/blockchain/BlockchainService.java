@@ -9,6 +9,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -34,7 +35,7 @@ public class BlockchainService {
         }
     }
 
-    
+    @Scheduled(fixedRate = 30000)
     private void updateLocalBlockchain() {
         peerGroup = new PeerGroup(networkStrategy.getNetwork(), blockchain);
         peerGroup.setUserAgent("cryptowalletservice", "0.1");
