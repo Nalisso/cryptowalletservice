@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
@@ -67,6 +68,21 @@ public class WalletResourceImpl implements WalletResource {
         }
 
         return walletInfoInsecureDTO;
+    }
+
+    @Override
+    public WalletInfoInsecureDTO getWallet(String userId) {
+
+        String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
+            new Object[]{userId}, String .class);
+
+        try {
+            return mapper.readValue(result, WalletInfoInsecureDTO.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+
+
     }
 
     @Override
