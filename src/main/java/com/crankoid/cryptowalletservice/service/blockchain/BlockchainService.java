@@ -1,7 +1,6 @@
 package com.crankoid.cryptowalletservice.service.blockchain;
 
-import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.NetworkStrategy;
-import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.TestNetworkStrategy;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.BitcoinNetwork;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -18,7 +17,6 @@ public class BlockchainService {
 
     private BlockChain blockchain;
     private PeerGroup peerGroup;
-    private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
 
     public BlockchainService(){
         updateBlockchainFile();
@@ -26,19 +24,19 @@ public class BlockchainService {
 
     public void updateBlockchainFile() {
         try {
-            BlockStore blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
-            blockchain = new BlockChain(networkStrategy.getNetwork(), blockStore);
+            BlockStore blockStore = new SPVBlockStore(BitcoinNetwork.get(), new File(new ClassPathResource("local_blockchain").getPath()));
+            blockchain = new BlockChain(BitcoinNetwork.get(), blockStore);
             updateLocalBlockchain();
         } catch (BlockStoreException e) {
             e.printStackTrace();
         }
     }
 
-    
+
     private void updateLocalBlockchain() {
-        peerGroup = new PeerGroup(networkStrategy.getNetwork(), blockchain);
+        peerGroup = new PeerGroup(BitcoinNetwork.get(), blockchain);
         peerGroup.setUserAgent("cryptowalletservice", "0.1");
-        peerGroup.addPeerDiscovery(new DnsDiscovery(networkStrategy.getNetwork()));
+        peerGroup.addPeerDiscovery(new DnsDiscovery(BitcoinNetwork.get()));
         peerGroup.start();
         peerGroup.downloadBlockChain();
     }

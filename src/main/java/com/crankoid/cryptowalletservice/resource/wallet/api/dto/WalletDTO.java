@@ -2,6 +2,8 @@ package com.crankoid.cryptowalletservice.resource.wallet.api.dto;
 
 public class WalletDTO {
     private BalanceDTO balance;
+    private String address;
+    private String userId;
 
     public BalanceDTO getBalance() {
         return balance;
@@ -26,7 +28,4 @@ public class WalletDTO {
     public void setUserId(String userId) {
         this.userId = userId;
     }
-
-    private String address;
-    private String userId;
 }

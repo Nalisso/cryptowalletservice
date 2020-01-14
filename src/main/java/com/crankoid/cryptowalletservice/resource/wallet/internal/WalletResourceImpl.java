@@ -5,9 +5,9 @@ import com.crankoid.cryptowalletservice.resource.wallet.api.dao.WalletSeed;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.UserId;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
-import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.NetworkStrategy;
-import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.TestNetworkStrategy;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.BitcoinNetwork;
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
+import com.crankoid.cryptowalletservice.service.wallet.WalletService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bitcoinj.core.*;
@@ -15,11 +15,9 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
@@ -27,17 +25,19 @@ public class WalletResourceImpl implements WalletResource {
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
-    private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
 
-    JdbcTemplate jdbcTemplate;
     static ObjectMapper mapper = new ObjectMapper();
 
     private final BlockchainService blockchainService;
+    private final JdbcTemplate jdbcTemplate;
+    private final WalletService walletService;
 
     public WalletResourceImpl(JdbcTemplate jdbcTemplate,
-                              BlockchainService blockchainService) {
+                              BlockchainService blockchainService,
+                              WalletService walletService) {
         this.jdbcTemplate = jdbcTemplate;
         this.blockchainService = blockchainService;
+        this.walletService = walletService;
     }
 
     @Override
@@ -62,22 +62,7 @@ public class WalletResourceImpl implements WalletResource {
 
     @Override
     public WalletDTO getWallet(String userId) {
-        return convertWallet(getWalletFromUserId(userId), userId);
-    }
-
-    private Wallet getWalletFromUserId(String userId){
-        try {
-            String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
-                    new Object[]{userId}, String.class);
-            WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
-            DeterministicSeed seed = new DeterministicSeed(
-                    walletSeed.getSeed(),
-                    walletSeed.getMnemonicCode(),
-                    walletSeed.getCreationTimeSeconds());
-            return Wallet.fromSeed(networkStrategy.getNetwork(), seed, Script.ScriptType.P2PKH);
-        } catch (JsonProcessingException  e) {
-            throw new IllegalStateException(e);
-        }
+        return convertWallet(walletService.getWalletFromUserId(userId), userId);
     }
 
     public boolean deleteWallet(String userId) {
@@ -99,8 +84,8 @@ public class WalletResourceImpl implements WalletResource {
     @Override
     public String sendBitcoinPayment(String sourceUserId, String destinationUserId, String satoshiAmount) {
         try {
-            Wallet walletSend = getWalletFromUserId(sourceUserId);
-            Wallet walletReceive = getWalletFromUserId(destinationUserId);
+            Wallet walletSend = walletService.getWalletFromUserId(sourceUserId);
+            Wallet walletReceive = walletService.getWalletFromUserId(destinationUserId);
             Address targetAddress = walletReceive.currentReceiveAddress();
             Coin amount = Coin.parseCoin(satoshiAmount);
             Wallet.SendResult result = walletSend.sendCoins(blockchainService.getPeerGroup(), targetAddress, amount);
@@ -113,6 +98,6 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     private Wallet createNewWallet() {
-        return Wallet.createDeterministic(networkStrategy.getNetwork(), Script.ScriptType.P2PKH);
+        return Wallet.createDeterministic(BitcoinNetwork.get(), Script.ScriptType.P2PKH);
     }
 }

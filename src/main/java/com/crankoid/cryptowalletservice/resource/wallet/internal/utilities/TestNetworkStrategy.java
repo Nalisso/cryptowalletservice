@@ -3,7 +3,7 @@ package com.crankoid.cryptowalletservice.resource.wallet.internal.utilities;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.TestNet3Params;
 
-public class TestNetworkStrategy implements NetworkStrategy {
+class TestNetworkStrategy implements NetworkStrategy {
 
     @Override
     public NetworkParameters getNetwork() {
