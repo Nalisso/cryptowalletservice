@@ -62,8 +62,8 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     @Override
-    public WalletDTO getWallet(UserId userId) {
-        return convertWallet(getWalletFromUserId(userId.getUserId()), userId.getUserId());
+    public WalletDTO getWallet(String userId) {
+        return convertWallet(getWalletFromUserId(userId), userId);
     }
 
     private Wallet getWalletFromUserId(String userId){
@@ -79,6 +79,11 @@ public class WalletResourceImpl implements WalletResource {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public boolean deleteWallet(String userId) {
+        int affectedRows = jdbcTemplate.update("DELETE FROM wallet WHERE refId = ?", userId);
+        return affectedRows > 0;
     }
 
     private WalletDTO convertWallet(Wallet wallet, String userId) {
