@@ -12,9 +12,6 @@ import java.math.BigInteger;
 @RequestMapping("/wallet")
 public interface WalletResource {
 
-    @GetMapping("/initialize")
-    String initBlockchainFile();
-
     @PostMapping
     String generateWallet(@RequestBody(required = true) UserId userId);
 

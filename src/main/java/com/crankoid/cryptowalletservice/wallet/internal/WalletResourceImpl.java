@@ -35,8 +35,6 @@ public class WalletResourceImpl implements WalletResource {
 
     private ECKey ecKey = null;
     private final NetworkStrategy networkStrategy = new TestNetworkStrategy();
-    private Wallet walletSend = createNewWallet();
-    private Wallet walletReceive = createNewWallet();
     private PeerGroup peerGroup;
     private BlockStore blockStore;
     private BlockChain blockchain;
@@ -50,7 +48,7 @@ public class WalletResourceImpl implements WalletResource {
 
 
     @Override
-    public String initBlockchainFile() {
+    public String updateBlockchainFile() {
         try {
             blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
             blockchain = new BlockChain(networkStrategy.getNetwork(), blockStore);
@@ -92,16 +90,19 @@ public class WalletResourceImpl implements WalletResource {
 
     @Override
     public WalletDTO getWallet(UserId userId) {
+        return convertWallet(getWalletFromUserId(userId.getUserId()), userId.getUserId());
+    }
+
+    private Wallet getWalletFromUserId(String userId){
         String result = jdbcTemplate.queryForObject("SELECT keyValue FROM wallet WHERE refId = ?",
-                new Object[]{userId.getUserId()}, String.class);
+                new Object[]{userId}, String.class);
         try {
             WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
             DeterministicSeed seed = new DeterministicSeed(
                     walletSeed.getSeed(),
                     walletSeed.getMnemonicCode(),
                     walletSeed.getCreationTimeSeconds());
-            Wallet wallet = Wallet.fromSeed(networkStrategy.getNetwork(), seed, Script.ScriptType.P2PKH);
-            return convertWallet(wallet, userId.getUserId());
+            return Wallet.fromSeed(networkStrategy.getNetwork(), seed, Script.ScriptType.P2PKH);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
@@ -121,6 +122,8 @@ public class WalletResourceImpl implements WalletResource {
     @Override
     public String sendBitcoinPayment(String sourceUserId, String destinationUserId, BigInteger satoshiAmount) {
         try {
+            Wallet walletSend = getWalletFromUserId(sourceUserId);
+            Wallet walletReceive = getWalletFromUserId(destinationUserId);
             Address targetAddress = walletReceive.currentReceiveAddress();
             Wallet.SendResult result = walletSend.sendCoins(peerGroup, targetAddress, Coin.MILLICOIN);
             TransactionBroadcast transactionBroadcast = result.broadcast;
