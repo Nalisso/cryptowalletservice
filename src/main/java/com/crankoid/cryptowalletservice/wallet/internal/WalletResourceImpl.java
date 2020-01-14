@@ -46,8 +46,6 @@ public class WalletResourceImpl implements WalletResource {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-
-    @Override
     public String updateBlockchainFile() {
         try {
             blockStore = new SPVBlockStore(networkStrategy.getNetwork(), new File(new ClassPathResource("local_blockchain").getPath()));
