@@ -20,10 +20,10 @@ public class BlockchainService {
     private PeerGroup peerGroup;
 
     public BlockchainService(){
-        updateBlockchainFile();
+        createBlockchainFile();
     }
 
-    public void updateBlockchainFile() {
+    public void createBlockchainFile() {
         try {
             BlockStore blockStore = new SPVBlockStore(BitcoinNetwork.get(), new File(new ClassPathResource("local_blockchain").getPath()));
             blockchain = new BlockChain(BitcoinNetwork.get(), blockStore);
@@ -33,13 +33,14 @@ public class BlockchainService {
         }
     }
 
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 30 * 1000, initialDelay = 90 * 1000)
     private void updateLocalBlockchain() {
         peerGroup = new PeerGroup(BitcoinNetwork.get(), blockchain);
         peerGroup.setUserAgent("cryptowalletservice", "0.1");
         peerGroup.addPeerDiscovery(new DnsDiscovery(BitcoinNetwork.get()));
         peerGroup.start();
         peerGroup.downloadBlockChain();
+        System.out.println("Refreshing blockchain");
     }
 
     public PeerGroup getPeerGroup(){
