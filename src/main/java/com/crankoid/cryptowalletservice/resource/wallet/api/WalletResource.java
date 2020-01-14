@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public interface WalletResource {
 
     @PostMapping
-    void generateWallet(@RequestBody(required = true) UserId userId);
+    WalletDTO generateWallet(@RequestBody(required = true) UserId userId);
 
     @GetMapping("/{userId}")
     WalletDTO getWallet(@PathVariable(required = true) String userId);

@@ -33,7 +33,7 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     @Override
-    public void generateWallet(UserId userId) {
+    public WalletDTO generateWallet(UserId userId) {
         System.out.println("userid: " + userId);
         if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
             throw new IllegalArgumentException("illegal length of userId");
@@ -47,6 +47,7 @@ public class WalletResourceImpl implements WalletResource {
                     "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
                     userId.getUserId(),
                     mapper.writeValueAsString(walletSeed));
+            return convertWallet(wallet, userId.getUserId());
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(e);
         }
