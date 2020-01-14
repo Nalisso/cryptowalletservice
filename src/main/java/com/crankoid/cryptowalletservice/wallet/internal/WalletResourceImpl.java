@@ -34,6 +34,11 @@ public class WalletResourceImpl implements WalletResource {
         walletInfoInsecureDTO.setPrivateKey(ecKey.getPrivateKeyAsHex());
         return walletInfoInsecureDTO;
     }
+    
+    private void generateWallet123(String userId){
+        Wallet wallet = createNewWallet();
+        //spara userId - wallet
+    }
 
     @Override
     public String getWalletInformation(String userId) {
