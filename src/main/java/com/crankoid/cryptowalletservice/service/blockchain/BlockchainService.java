@@ -35,12 +35,14 @@ public class BlockchainService {
 
     @Scheduled(fixedRate = 30 * 1000, initialDelay = 90 * 1000)
     private void updateLocalBlockchain() {
+        long ms = System.currentTimeMillis();
+        System.out.println("Start refreshing blockchain");
         peerGroup = new PeerGroup(BitcoinNetwork.get(), blockchain);
         peerGroup.setUserAgent("cryptowalletservice", "0.1");
         peerGroup.addPeerDiscovery(new DnsDiscovery(BitcoinNetwork.get()));
         peerGroup.start();
         peerGroup.downloadBlockChain();
-        System.out.println("Refreshing blockchain");
+        System.out.println("Refreshing blockchain completed in " + (System.currentTimeMillis() - ms) + " ms");
     }
 
     public PeerGroup getPeerGroup(){

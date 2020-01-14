@@ -71,6 +71,7 @@ public class WalletResourceImpl implements WalletResource {
         balanceDTO.setEstimated(wallet.getBalance(Wallet.BalanceType.ESTIMATED).value);
         walletDTO.setBalance(balanceDTO);
         walletDTO.setUserId(userId);
+        System.out.println(wallet.toString());
         return walletDTO;
     }
 }
