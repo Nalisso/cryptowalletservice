@@ -10,7 +10,6 @@ import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
-
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -79,22 +77,6 @@ public class WalletResourceImpl implements WalletResource {
         walletDTO.setBalance(balanceDTO);
         walletDTO.setUserId(userId);
         return walletDTO;
-    }
-
-    @Override
-    public String sendBitcoinPayment(String sourceUserId, String destinationUserId, String satoshiAmount) {
-        try {
-            Wallet walletSend = walletService.getWalletFromUserId(sourceUserId);
-            Wallet walletReceive = walletService.getWalletFromUserId(destinationUserId);
-            Address targetAddress = walletReceive.currentReceiveAddress();
-            Coin amount = Coin.parseCoin(satoshiAmount);
-            Wallet.SendResult result = walletSend.sendCoins(blockchainService.getPeerGroup(), targetAddress, amount);
-            TransactionBroadcast transactionBroadcast = result.broadcast;
-            return "OK";
-        } catch (InsufficientMoneyException e) {
-            e.printStackTrace();
-            return "Insufficient Money :(";
-        }
     }
 
     private Wallet createNewWallet() {

@@ -21,11 +21,4 @@ public interface WalletResource {
 
     @DeleteMapping("/{userId}")
     boolean deleteWallet(@PathVariable(required = true) String userId);
-
-    @PostMapping("/send")
-    String sendBitcoinPayment(@RequestBody(required = true) String sourceUserId,
-                              @RequestBody(required = true) String destinationUserId,
-                              @RequestBody(required = true) String satoshiAmount);
-
-
 }
