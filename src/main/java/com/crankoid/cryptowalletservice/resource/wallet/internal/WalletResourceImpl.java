@@ -48,16 +48,17 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     @Override
-    public WalletDTO generateWallet(UserId userId) {
+    public void generateWallet(UserId userId) {
         System.out.println("userid: " + userId);
         if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
             throw new IllegalArgumentException("illegal length of userId");
         }
         try {
-            Wallet wallet = walletService.createNewWallet();
+            Wallet wallet = walletService.createNewWallet(userId.getUserId());
             blockchainService.replayBlockchain(wallet, String.format("BitcoinWallet-%s", userId.getUserId()));
             wallet.saveToFile(new File(String.format("BitcoinWallet-%s", userId.getUserId())));
-            return convertWallet(wallet, userId.getUserId());
+            System.out.println("From genwallet resource: " + wallet.toString());
+            //return convertWallet(wallet, userId.getUserId());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -65,7 +66,9 @@ public class WalletResourceImpl implements WalletResource {
 
     @Override
     public WalletDTO getWallet(String userId) {
-        return convertWallet(walletService.getWalletFromUserId(userId), userId);
+        Wallet wallet = walletService.getWallet(userId);
+        blockchainService.replayBlockchain(wallet, userId);
+        return convertWallet(wallet, userId);
     }
 
     public boolean deleteWallet(String userId) {

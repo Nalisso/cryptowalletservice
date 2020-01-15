@@ -26,11 +26,13 @@ public class PaymentResourceImpl implements PaymentResource {
     @Override
     public String sendBitcoinPayment(PaymentDTO paymentDTO) {
         try {
-            Wallet walletSend = walletService.getWalletFromUserId(paymentDTO.getSourceUserId());
-            Wallet walletReceive = walletService.getWalletFromUserId(paymentDTO.getDestinationUserId());
-            Address targetAddress = walletReceive.currentReceiveAddress();
+            Wallet senderWallet = walletService.getWallet(paymentDTO.getSourceUserId());
+            Wallet receiverWallet = walletService.getWallet(paymentDTO.getDestinationUserId());
+            Address targetAddress = senderWallet.currentReceiveAddress();
             Coin amount = Coin.parseCoin(paymentDTO.getSatoshis());
-            Wallet.SendResult result = walletSend.sendCoins(null, targetAddress, amount); //SKA INTE VARE NULL
+
+
+            Wallet.SendResult result = receiverWallet.sendCoins(null, targetAddress, amount); //SKA INTE VARE NULL
             TransactionBroadcast transactionBroadcast = result.broadcast;
             return "OK";
         } catch (InsufficientMoneyException e) {

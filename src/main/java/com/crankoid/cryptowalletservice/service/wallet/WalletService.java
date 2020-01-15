@@ -1,82 +1,77 @@
 package com.crankoid.cryptowalletservice.service.wallet;
 
-import com.crankoid.cryptowalletservice.resource.wallet.api.dao.WalletSeed;
 import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.BitcoinNetwork;
-import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.CodedOutputStream;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.PersonalWallet;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.wallet.*;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.bitcoinj.wallet.Wallet;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-
-import static com.google.protobuf.ByteString.newOutput;
+import java.util.Map;
 
 @Service
 public class WalletService {
 
+    private Map<String, Wallet> wallets;
     private final JdbcTemplate jdbcTemplate;
-    static ObjectMapper mapper = new ObjectMapper();
-    private BlockchainService blockchainService;
 
-    public WalletService(JdbcTemplate jdbcTemplate,
-                         BlockchainService blockchainService){
+    public WalletService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.blockchainService = blockchainService;
+        wallets = initializeWallets();
     }
 
-    public Wallet createNewWallet() {
-        return Wallet.createDeterministic(BitcoinNetwork.get(), Script.ScriptType.P2PKH);
+    public Wallet createNewWallet(String userId) {
+        List<String> userIds = jdbcTemplate.queryForList("SELECT userId FROM registeredUsers", String.class);
+        if (userIds.contains(userId)) {
+            throw new TooManyWalletsException();
+        }
+        jdbcTemplate.update(
+                "INSERT INTO registeredUsers (userId) VALUES(?)",
+                userId);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.get(), Script.ScriptType.P2PKH);
+        PersonalWallet.save(userId, wallet);
+        wallets.put(userId, wallet);
+        return wallet;
     }
 
-    public Wallet getWalletFromUserId(String userId){
-        try {
-            Wallet wallet = Wallet.loadFromFile(new File(String.format("BitcoinWallet-%s", userId)));
-            blockchainService.replayBlockchain(wallet, String.format("BitcoinWallet-%s", userId));
-            wallet.saveToFile(new File(String.format("BitcoinWallet-%s", userId)));
-            return wallet;
-        } catch (UnreadableWalletException | IOException e) {
-            throw new IllegalStateException(e);
+    public Wallet getWallet(String userId) {
+        List<String> userIds = jdbcTemplate.queryForList("SELECT userId FROM registeredUsers", String.class);
+        if (userIds.contains(userId)) {
+            return PersonalWallet.load(userId);
+        } else {
+            throw new UserNotFoundException();
         }
     }
 
-    public List<Wallet> getAllWallets(){
-        try {
-            return Arrays.asList(Wallet.loadFromFile(new File("BitcoinWallet-mada42")));
-        } catch (UnreadableWalletException e) {
-            e.printStackTrace();
-            throw new IllegalStateException(e);
+    public boolean deleteWallet(String userId) {
+        List<String> userIds = jdbcTemplate.queryForList("SELECT userId FROM registeredUsers", String.class);
+        if (userIds.contains(userId)) {
+            return PersonalWallet.remove(userId);
+        } else {
+            throw new UserNotFoundException();
         }
     }
 
-    private List<Wallet> convertToWallet(List<String> resultSet){
-        List<Wallet> wallets = new ArrayList<>();
-        resultSet.stream().forEach(result -> {
-            try {
-                WalletSeed walletSeed = mapper.readValue(result, WalletSeed.class);
-                DeterministicSeed seed = new DeterministicSeed(
-                        walletSeed.getSeed(),
-                        walletSeed.getMnemonicCode(),
-                        walletSeed.getCreationTimeSeconds());
-                wallets.add(Wallet.fromSeed(BitcoinNetwork.get(), seed, Script.ScriptType.P2PKH));
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-        });
+    public Map<String, Wallet> getAllWallets() {
         return wallets;
     }
 
     @ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "User not found")
-    public class UserNotFoundException extends RuntimeException {
+    public static class UserNotFoundException extends RuntimeException {
+    }
+
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED, reason = "User already has a wallet")
+    public static class TooManyWalletsException extends RuntimeException {
+    }
+
+    private Map<String, Wallet> initializeWallets() {
+        Map<String, Wallet> wallets = new HashMap<>();
+        List<String> userIds = jdbcTemplate.queryForList("SELECT userId FROM registeredUsers", String.class);
+        userIds.forEach(userId -> wallets.put(userId, PersonalWallet.load(userId)));
+        return wallets;
     }
 }

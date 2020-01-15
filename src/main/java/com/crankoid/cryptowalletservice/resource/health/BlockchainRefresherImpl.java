@@ -17,6 +17,6 @@ public class BlockchainRefresherImpl {
 
     @GetMapping("/force-update")
     public void forceUpdateBlockchain(){
-        blockchainService.updateLocalBlockchain();
+        blockchainService.replayBlockchain(null, null);
     }
 }
