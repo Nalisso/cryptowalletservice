@@ -1,31 +1,18 @@
 package com.crankoid.cryptowalletservice.resource.wallet.internal;
 
 import com.crankoid.cryptowalletservice.resource.wallet.api.WalletResource;
-import com.crankoid.cryptowalletservice.resource.wallet.api.dao.WalletSeed;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.UserId;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.PersonalWallet;
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.CodedOutputStream;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
-import org.bitcoinj.wallet.*;
+import org.bitcoinj.wallet.Wallet;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.codec.protobuf.ProtobufEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-
-import static com.google.protobuf.ByteString.newOutput;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
@@ -53,15 +40,10 @@ public class WalletResourceImpl implements WalletResource {
         if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
             throw new IllegalArgumentException("illegal length of userId");
         }
-        try {
-            Wallet wallet = walletService.createNewWallet(userId.getUserId());
-            blockchainService.replayBlockchain(wallet, String.format("BitcoinWallet-%s", userId.getUserId()));
-            wallet.saveToFile(new File(String.format("BitcoinWallet-%s", userId.getUserId())));
-            System.out.println("From genwallet resource: " + wallet.toString());
-            //return convertWallet(wallet, userId.getUserId());
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        Wallet wallet = walletService.createNewWallet(userId.getUserId());
+        blockchainService.replayBlockchain(wallet, userId.getUserId());
+        PersonalWallet.save(userId.getUserId(), wallet);
+        System.out.println("From genwallet resource: " + wallet.toString());
     }
 
     @Override
