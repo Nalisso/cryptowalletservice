@@ -18,6 +18,8 @@ import java.io.IOException;
 @Service
 public class BlockchainService {
 
+    private BlockStore blockStore;
+
     public BlockchainService() {
     }
 
@@ -46,7 +48,10 @@ public class BlockchainService {
     public void replayBlockchain(Wallet wallet, String filename) {
         try {
             System.out.println("Replaying blockchain");
-            BlockStore blockStore = new SPVBlockStore(BitcoinNetwork.get(), new File("local_blockchain"));
+            if (blockStore != null){
+                blockStore.close();
+            }
+            blockStore = new SPVBlockStore(BitcoinNetwork.get(), new File("local_blockchain"));
             BlockChain blockchain = new BlockChain(BitcoinNetwork.get(), wallet, blockStore);
             PeerGroup peerGroup = new PeerGroup(BitcoinNetwork.get(), blockchain);
             peerGroup.setUserAgent("cryptowalletservice", "0.1");
