@@ -30,7 +30,7 @@ public class PaymentResourceImpl implements PaymentResource {
             Wallet walletReceive = walletService.getWalletFromUserId(paymentDTO.getDestinationUserId());
             Address targetAddress = walletReceive.currentReceiveAddress();
             Coin amount = Coin.parseCoin(paymentDTO.getSatoshis());
-            Wallet.SendResult result = walletSend.sendCoins(blockchainService.getPeerGroup(), targetAddress, amount);
+            Wallet.SendResult result = walletSend.sendCoins(null, targetAddress, amount); //SKA INTE VARE NULL
             TransactionBroadcast transactionBroadcast = result.broadcast;
             return "OK";
         } catch (InsufficientMoneyException e) {

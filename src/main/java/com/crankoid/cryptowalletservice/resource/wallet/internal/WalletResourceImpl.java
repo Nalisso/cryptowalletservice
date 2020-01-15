@@ -9,12 +9,23 @@ import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bitcoinj.wallet.DeterministicSeed;
-import org.bitcoinj.wallet.Wallet;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedOutputStream;
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+import org.bitcoinj.wallet.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.codec.protobuf.ProtobufEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+
+import static com.google.protobuf.ByteString.newOutput;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
@@ -26,12 +37,14 @@ public class WalletResourceImpl implements WalletResource {
 
     private final JdbcTemplate jdbcTemplate;
     private final WalletService walletService;
-    private Wallet wallet;
+    private final BlockchainService blockchainService;
 
     public WalletResourceImpl(JdbcTemplate jdbcTemplate,
-                              WalletService walletService) {
+                              WalletService walletService,
+                              BlockchainService blockchainService) {
         this.jdbcTemplate = jdbcTemplate;
         this.walletService = walletService;
+        this.blockchainService = blockchainService;
     }
 
     @Override
@@ -41,20 +54,11 @@ public class WalletResourceImpl implements WalletResource {
             throw new IllegalArgumentException("illegal length of userId");
         }
         try {
-            if (wallet == null) {
-                wallet = walletService.createNewWallet();
-            } else {
-                System.out.println(wallet.toString());
-            }
             Wallet wallet = walletService.createNewWallet();
-            DeterministicSeed seed = wallet.getKeyChainSeed();
-            WalletSeed walletSeed = new WalletSeed(seed.getMnemonicCode(), seed.getSeedBytes(), seed.getCreationTimeSeconds());
-            jdbcTemplate.update(
-                    "INSERT INTO wallet (refId, keyValue) VALUES(?,?)",
-                    userId.getUserId(),
-                    mapper.writeValueAsString(walletSeed));
+            blockchainService.replayBlockchain(wallet, String.format("BitcoinWallet-%s", userId.getUserId()));
+            wallet.saveToFile(new File(String.format("BitcoinWallet-%s", userId.getUserId())));
             return convertWallet(wallet, userId.getUserId());
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new IllegalStateException(e);
         }
     }
