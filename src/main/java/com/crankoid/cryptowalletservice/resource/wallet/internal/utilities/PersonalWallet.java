@@ -12,6 +12,7 @@ public class PersonalWallet {
 
     public static void save(String userId, Wallet wallet){
         try {
+            System.out.println(String.format("Saving wallet for %s", userId));
             wallet.saveToFile(new File(walletPrefix.concat(userId)));
         } catch (IOException e) {
             e.printStackTrace();
@@ -21,6 +22,7 @@ public class PersonalWallet {
 
     public static Wallet load(String userId){
         try {
+            System.out.println(String.format("Loading wallet for %s", userId));
             return Wallet.loadFromFile(new File(walletPrefix.concat(userId)), null);
         } catch (UnreadableWalletException e) {
             e.printStackTrace();

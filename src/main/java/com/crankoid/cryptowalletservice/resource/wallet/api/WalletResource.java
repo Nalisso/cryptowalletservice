@@ -21,4 +21,5 @@ public interface WalletResource {
 
     @DeleteMapping("/{userId}")
     boolean deleteWallet(@PathVariable(required = true) String userId);
+
 }

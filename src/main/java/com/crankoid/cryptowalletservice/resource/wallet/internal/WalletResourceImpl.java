@@ -4,58 +4,42 @@ import com.crankoid.cryptowalletservice.resource.wallet.api.WalletResource;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.UserId;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
-import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.PersonalWallet;
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bitcoinj.wallet.Wallet;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
 public class WalletResourceImpl implements WalletResource {
 
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
-
-    static ObjectMapper mapper = new ObjectMapper();
-
-    private final JdbcTemplate jdbcTemplate;
     private final WalletService walletService;
     private final BlockchainService blockchainService;
 
-    public WalletResourceImpl(JdbcTemplate jdbcTemplate,
-                              WalletService walletService,
+    public WalletResourceImpl(WalletService walletService,
                               BlockchainService blockchainService) {
-        this.jdbcTemplate = jdbcTemplate;
         this.walletService = walletService;
         this.blockchainService = blockchainService;
     }
 
     @Override
     public void generateWallet(UserId userId) {
-        System.out.println("userid: " + userId);
         if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
-            throw new IllegalArgumentException("illegal length of userId");
+            throw new IllegalArgumentException("Illegal length of userId");
         }
         Wallet wallet = walletService.createNewWallet(userId.getUserId());
+        //Creates a local copy of the blockchain only containing blocks relevant for this wallet
         blockchainService.replayBlockchain(wallet, userId.getUserId());
-        PersonalWallet.save(userId.getUserId(), wallet);
-        System.out.println("From genwallet resource: " + wallet.toString());
     }
 
     @Override
     public WalletDTO getWallet(String userId) {
-        Wallet wallet = walletService.getWallet(userId);
-        blockchainService.replayBlockchain(wallet, userId);
+        Wallet wallet = blockchainService.replayBlockchain(walletService.getWallet(userId), userId);
         return convertWallet(wallet, userId);
     }
 
     public boolean deleteWallet(String userId) {
-        int affectedRows = jdbcTemplate.update("DELETE FROM wallet WHERE refId = ?", userId);
-        return affectedRows > 0;
+        return walletService.deleteWallet(userId);
     }
 
     private WalletDTO convertWallet(Wallet wallet, String userId) {
