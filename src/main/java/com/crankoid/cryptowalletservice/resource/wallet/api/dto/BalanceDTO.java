@@ -4,6 +4,14 @@ public class BalanceDTO {
     private long available;
     private long estimated;
 
+    public BalanceDTO() {
+    }
+
+    public BalanceDTO(long available, long estimated) {
+        this.available = available;
+        this.estimated = estimated;
+    }
+
     public long getAvailable() {
         return available;
     }

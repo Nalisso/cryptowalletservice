@@ -6,6 +6,15 @@ public class WalletDTO {
     private String address;
     private String userId;
 
+    public WalletDTO(BalanceDTO balance, String address, String userId) {
+        this.balance = balance;
+        this.address = address;
+        this.userId = userId;
+    }
+
+    public WalletDTO() {
+    }
+
     public BalanceDTO getBalance() {
         return balance;
     }

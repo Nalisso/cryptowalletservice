@@ -1,7 +1,11 @@
 package com.crankoid.cryptowalletservice.resource.payment.internal;
 
 import com.crankoid.cryptowalletservice.resource.payment.api.PaymentResource;
+import com.crankoid.cryptowalletservice.resource.payment.api.dto.FinishedPaymentDTO;
 import com.crankoid.cryptowalletservice.resource.payment.api.dto.PaymentDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.PersonalWallet;
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
 import org.bitcoinj.core.*;
@@ -25,16 +29,16 @@ public class PaymentResourceImpl implements PaymentResource {
     }
 
     @Override
-    public String sendBitcoinPayment(PaymentDTO paymentDTO) {
+    public FinishedPaymentDTO sendBitcoinPayment(PaymentDTO paymentDTO) {
         try {
             Wallet senderWallet = walletService.getWallet(paymentDTO.getSourceUserId());
             Wallet receiverWallet = walletService.getWallet(paymentDTO.getDestinationUserId());
             Address targetAddress = senderWallet.currentReceiveAddress();
-            Coin amount = Coin.parseCoin(paymentDTO.getSatoshis());
+            Coin amount = Coin.valueOf(Long.getLong(paymentDTO.getSatoshis()));
             PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId());
             Wallet.SendResult result = receiverWallet.sendCoins(broadcaster, targetAddress, amount);
-            Transaction completeTransaction = result.broadcastComplete.get();
-            return completeTransaction.toString();
+            PersonalWallet.save(paymentDTO.getSourceUserId(), senderWallet);
+            return getFinishedPaymentDTO(senderWallet, paymentDTO, result.broadcastComplete.get());
         } catch (InsufficientMoneyException e) {
             e.printStackTrace();
             throw new InsufficientFunds();
@@ -42,6 +46,14 @@ public class PaymentResourceImpl implements PaymentResource {
             e.printStackTrace();
             throw new IllegalStateException();
         }
+    }
+
+    private FinishedPaymentDTO getFinishedPaymentDTO(Wallet senderWallet, PaymentDTO paymentDTO, Transaction completeTransaction){
+        BalanceDTO balanceDTO = new BalanceDTO(
+                senderWallet.getBalance(Wallet.BalanceType.AVAILABLE).longValue(),
+                senderWallet.getBalance(Wallet.BalanceType.ESTIMATED).longValue());
+        WalletDTO returnSenderWallet = new WalletDTO(balanceDTO, senderWallet.currentReceiveAddress().toString(), paymentDTO.getSourceUserId());
+        return new FinishedPaymentDTO(completeTransaction.getTxId().toString(), returnSenderWallet);
     }
 
     @ResponseStatus(code = HttpStatus.NOT_ACCEPTABLE, reason = "InsufficientFunds")
