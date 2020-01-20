@@ -35,6 +35,7 @@ public class WalletResourceImpl implements WalletResource {
     @Override
     public WalletDTO getWallet(String userId) {
         Wallet wallet = blockchainService.replayBlockchain(walletService.getWallet(userId), userId);
+        wallet.getTransactions(false);
         return convertWallet(wallet, userId);
     }
 
