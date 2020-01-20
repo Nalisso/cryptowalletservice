@@ -4,7 +4,7 @@ public class UserId {
 
     private String userId;
     public String getUserId() {
-        return userId;
+        return userId.toLowerCase();
     }
 
     public void setUserId(String userId) {

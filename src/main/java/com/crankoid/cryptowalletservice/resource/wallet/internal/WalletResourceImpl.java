@@ -27,20 +27,20 @@ public class WalletResourceImpl implements WalletResource {
         if (!StringUtils.hasLength(userId.getUserId()) || userId.getUserId().length() != 6) {
             throw new IllegalArgumentException("Illegal length of userId");
         }
-        Wallet wallet = walletService.createNewWallet(userId.getUserId());
+        Wallet wallet = walletService.createNewWallet(userId.getUserId().toLowerCase());
         //Creates a local copy of the blockchain only containing blocks relevant for this wallet
-        blockchainService.replayBlockchain(wallet, userId.getUserId());
+        blockchainService.replayBlockchain(wallet, userId.getUserId().toLowerCase());
     }
 
     @Override
     public WalletDTO getWallet(String userId) {
-        Wallet wallet = blockchainService.replayBlockchain(walletService.getWallet(userId), userId);
+        Wallet wallet = blockchainService.replayBlockchain(walletService.getWallet(userId.toLowerCase()), userId.toLowerCase());
         wallet.getTransactions(false);
-        return convertWallet(wallet, userId);
+        return convertWallet(wallet, userId.toLowerCase());
     }
 
     public boolean deleteWallet(String userId) {
-        return walletService.deleteWallet(userId);
+        return walletService.deleteWallet(userId.toLowerCase());
     }
 
     private WalletDTO convertWallet(Wallet wallet, String userId) {
@@ -50,7 +50,7 @@ public class WalletResourceImpl implements WalletResource {
         balanceDTO.setAvailable(wallet.getBalance(Wallet.BalanceType.AVAILABLE).value);
         balanceDTO.setEstimated(wallet.getBalance(Wallet.BalanceType.ESTIMATED).value);
         walletDTO.setBalance(balanceDTO);
-        walletDTO.setUserId(userId);
+        walletDTO.setUserId(userId.toLowerCase());
         System.out.println(wallet.toString());
         return walletDTO;
     }

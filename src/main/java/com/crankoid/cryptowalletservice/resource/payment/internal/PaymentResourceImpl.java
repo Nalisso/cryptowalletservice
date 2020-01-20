@@ -32,12 +32,12 @@ public class PaymentResourceImpl implements PaymentResource {
     @Override
     public FinishedPaymentDTO sendBitcoinPayment(PaymentDTO paymentDTO) {
         try {
-            Wallet senderWallet = walletService.getWallet(paymentDTO.getSourceUserId());
+            Wallet senderWallet = walletService.getWallet(paymentDTO.getSourceUserId().toLowerCase());
             Address targetAddress = LegacyAddress.fromString(BitcoinNetwork.get(), paymentDTO.getDestinationAddress());
             Coin amount = Coin.valueOf(Long.getLong(paymentDTO.getSatoshis()));
-            PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId());
+            PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId().toLowerCase());
             Wallet.SendResult result = senderWallet.sendCoins(broadcaster, targetAddress, amount);
-            PersonalWallet.save(paymentDTO.getSourceUserId(), senderWallet);
+            PersonalWallet.save(paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
             broadcaster.stop();
             return getFinishedPaymentDTO(senderWallet, paymentDTO, result.broadcastComplete.get());
         } catch (InsufficientMoneyException e) {
@@ -53,7 +53,7 @@ public class PaymentResourceImpl implements PaymentResource {
         BalanceDTO balanceDTO = new BalanceDTO(
                 senderWallet.getBalance(Wallet.BalanceType.AVAILABLE).longValue(),
                 senderWallet.getBalance(Wallet.BalanceType.ESTIMATED).longValue());
-        WalletDTO returnSenderWallet = new WalletDTO(balanceDTO, senderWallet.currentReceiveAddress().toString(), paymentDTO.getSourceUserId());
+        WalletDTO returnSenderWallet = new WalletDTO(balanceDTO, senderWallet.currentReceiveAddress().toString(), paymentDTO.getSourceUserId().toLowerCase());
         return new FinishedPaymentDTO(completeTransaction.getTxId().toString(), returnSenderWallet);
     }
 
