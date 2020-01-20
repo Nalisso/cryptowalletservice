@@ -3,7 +3,7 @@ package com.crankoid.cryptowalletservice.resource.payment.api.dto;
 public class PaymentDTO {
 
     private String sourceUserId;
-    private String destinationUserId;
+    private String destinationAddress;
     private String satoshis;
 
     public String getSourceUserId() {
@@ -14,12 +14,12 @@ public class PaymentDTO {
         this.sourceUserId = sourceUserId;
     }
 
-    public String getDestinationUserId() {
-        return destinationUserId;
+    public String getDestinationAddress() {
+        return destinationAddress;
     }
 
-    public void setDestinationUserId(String destinationUserId) {
-        this.destinationUserId = destinationUserId;
+    public void setDestinationAddress(String destinationAddress) {
+        this.destinationAddress = destinationAddress;
     }
 
     public String getSatoshis() {

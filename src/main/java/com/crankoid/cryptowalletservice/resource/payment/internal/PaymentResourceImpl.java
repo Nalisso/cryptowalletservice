@@ -5,6 +5,7 @@ import com.crankoid.cryptowalletservice.resource.payment.api.dto.FinishedPayment
 import com.crankoid.cryptowalletservice.resource.payment.api.dto.PaymentDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.BitcoinNetwork;
 import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.PersonalWallet;
 import com.crankoid.cryptowalletservice.service.blockchain.BlockchainService;
 import com.crankoid.cryptowalletservice.service.wallet.WalletService;
@@ -32,12 +33,12 @@ public class PaymentResourceImpl implements PaymentResource {
     public FinishedPaymentDTO sendBitcoinPayment(PaymentDTO paymentDTO) {
         try {
             Wallet senderWallet = walletService.getWallet(paymentDTO.getSourceUserId());
-            Wallet receiverWallet = walletService.getWallet(paymentDTO.getDestinationUserId());
-            Address targetAddress = senderWallet.currentReceiveAddress();
+            Address targetAddress = LegacyAddress.fromString(BitcoinNetwork.get(), paymentDTO.getDestinationAddress());
             Coin amount = Coin.valueOf(Long.getLong(paymentDTO.getSatoshis()));
             PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId());
-            Wallet.SendResult result = receiverWallet.sendCoins(broadcaster, targetAddress, amount);
+            Wallet.SendResult result = senderWallet.sendCoins(broadcaster, targetAddress, amount);
             PersonalWallet.save(paymentDTO.getSourceUserId(), senderWallet);
+            broadcaster.stop();
             return getFinishedPaymentDTO(senderWallet, paymentDTO, result.broadcastComplete.get());
         } catch (InsufficientMoneyException e) {
             e.printStackTrace();
