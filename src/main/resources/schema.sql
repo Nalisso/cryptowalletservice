@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS registeredUsers;
 CREATE TABLE IF NOT EXISTS registeredUsers
 (
  userId varchar(10) NOT NULL ,
