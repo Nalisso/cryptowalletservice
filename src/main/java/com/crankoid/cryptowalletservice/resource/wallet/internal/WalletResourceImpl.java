@@ -35,7 +35,6 @@ public class WalletResourceImpl implements WalletResource {
     @Override
     public WalletDTO getWallet(String userId) {
         Wallet wallet = blockchainService.replayBlockchain(walletService.getWallet(userId.toLowerCase()), userId.toLowerCase());
-        wallet.getTransactions(false);
         return convertWallet(wallet, userId.toLowerCase());
     }
 
@@ -44,13 +43,14 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     private WalletDTO convertWallet(Wallet wallet, String userId) {
-        WalletDTO walletDTO = new WalletDTO();
         BalanceDTO balanceDTO = new BalanceDTO();
-        walletDTO.setAddress(wallet.currentReceiveAddress().toString());
         balanceDTO.setAvailable(wallet.getBalance(Wallet.BalanceType.AVAILABLE).value);
         balanceDTO.setEstimated(wallet.getBalance(Wallet.BalanceType.ESTIMATED).value);
-        walletDTO.setBalance(balanceDTO);
-        walletDTO.setUserId(userId.toLowerCase());
+        WalletDTO walletDTO = new WalletDTO(
+                balanceDTO,
+                wallet.currentReceiveAddress().toString(),
+                userId.toLowerCase(),
+                wallet);
         System.out.println(wallet.toString());
         return walletDTO;
     }

@@ -4,6 +4,7 @@ import com.crankoid.cryptowalletservice.resource.payment.api.PaymentResource;
 import com.crankoid.cryptowalletservice.resource.payment.api.dto.FinishedPaymentDTO;
 import com.crankoid.cryptowalletservice.resource.payment.api.dto.PaymentDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.BalanceDTO;
+import com.crankoid.cryptowalletservice.resource.wallet.api.dto.TransactionDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.api.dto.WalletDTO;
 import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.BitcoinNetwork;
 import com.crankoid.cryptowalletservice.resource.wallet.internal.utilities.PersonalWallet;
@@ -15,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -53,7 +56,7 @@ public class PaymentResourceImpl implements PaymentResource {
         BalanceDTO balanceDTO = new BalanceDTO(
                 senderWallet.getBalance(Wallet.BalanceType.AVAILABLE).longValue(),
                 senderWallet.getBalance(Wallet.BalanceType.ESTIMATED).longValue());
-        WalletDTO returnSenderWallet = new WalletDTO(balanceDTO, senderWallet.currentReceiveAddress().toString(), paymentDTO.getSourceUserId().toLowerCase());
+        WalletDTO returnSenderWallet = new WalletDTO(balanceDTO, senderWallet.currentReceiveAddress().toString(), paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
         return new FinishedPaymentDTO(completeTransaction.getTxId().toString(), returnSenderWallet);
     }
 
