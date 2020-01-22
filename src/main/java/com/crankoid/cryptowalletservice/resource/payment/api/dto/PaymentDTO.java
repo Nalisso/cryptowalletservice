@@ -4,7 +4,7 @@ public class PaymentDTO {
 
     private String sourceUserId;
     private String destinationAddress;
-    private String satoshis;
+    private String bitcoins;
 
     public String getSourceUserId() {
         return sourceUserId;
@@ -22,12 +22,12 @@ public class PaymentDTO {
         this.destinationAddress = destinationAddress;
     }
 
-    public String getSatoshis() {
-        return satoshis;
+    public String getBitcoins() {
+        return bitcoins;
     }
 
-    public void setSatoshis(String satoshis) {
-        this.satoshis = satoshis;
+    public void setBitcoins(String bitcoins) {
+        this.bitcoins = bitcoins;
     }
 
 }
