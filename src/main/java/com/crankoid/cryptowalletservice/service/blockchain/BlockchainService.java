@@ -35,6 +35,7 @@ public class BlockchainService {
             peerGroup.addWallet(wallet);
             peerGroup.start();
             peerGroup.downloadBlockChain();
+            peerGroup.removeWallet(wallet);
             peerGroup.stop();
             PersonalWallet.save(userId, wallet);
             System.out.println(String.format("Blockchain replayed for %s", userId));

@@ -53,10 +53,7 @@ public class PaymentResourceImpl implements PaymentResource {
     }
 
     private FinishedPaymentDTO getFinishedPaymentDTO(Wallet senderWallet, PaymentDTO paymentDTO, Transaction completeTransaction){
-        BalanceDTO balanceDTO = new BalanceDTO(
-                senderWallet.getBalance(Wallet.BalanceType.AVAILABLE).longValue(),
-                senderWallet.getBalance(Wallet.BalanceType.ESTIMATED).longValue());
-        WalletDTO returnSenderWallet = new WalletDTO(balanceDTO, senderWallet.currentReceiveAddress().toString(), paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
+        WalletDTO returnSenderWallet = new WalletDTO(new BalanceDTO(senderWallet), paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
         return new FinishedPaymentDTO(completeTransaction.getTxId().toString(), returnSenderWallet);
     }
 

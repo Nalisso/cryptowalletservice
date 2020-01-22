@@ -43,12 +43,8 @@ public class WalletResourceImpl implements WalletResource {
     }
 
     private WalletDTO convertWallet(Wallet wallet, String userId) {
-        BalanceDTO balanceDTO = new BalanceDTO();
-        balanceDTO.setAvailable(wallet.getBalance(Wallet.BalanceType.AVAILABLE).value);
-        balanceDTO.setEstimated(wallet.getBalance(Wallet.BalanceType.ESTIMATED).value);
         WalletDTO walletDTO = new WalletDTO(
-                balanceDTO,
-                wallet.currentReceiveAddress().toString(),
+                new BalanceDTO(wallet),
                 userId.toLowerCase(),
                 wallet);
         System.out.println(wallet.toString());

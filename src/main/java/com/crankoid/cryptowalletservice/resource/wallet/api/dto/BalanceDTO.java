@@ -1,30 +1,29 @@
 package com.crankoid.cryptowalletservice.resource.wallet.api.dto;
 
+import org.bitcoinj.wallet.Wallet;
+
 public class BalanceDTO {
-    private long available;
-    private long estimated;
+    private String available;
+    private String estimated;
 
-    public BalanceDTO() {
+    public BalanceDTO(Wallet wallet) {
+        this.available = wallet.getBalance(Wallet.BalanceType.AVAILABLE).toFriendlyString();
+        this.estimated = wallet.getBalance(Wallet.BalanceType.ESTIMATED).toFriendlyString();
     }
 
-    public BalanceDTO(long available, long estimated) {
-        this.available = available;
-        this.estimated = estimated;
-    }
-
-    public long getAvailable() {
+    public String getAvailable() {
         return available;
     }
 
-    public void setAvailable(long available) {
+    public void setAvailable(String available) {
         this.available = available;
     }
 
-    public long getEstimated() {
+    public String getEstimated() {
         return estimated;
     }
 
-    public void setEstimated(long estimated) {
+    public void setEstimated(String estimated) {
         this.estimated = estimated;
     }
 }

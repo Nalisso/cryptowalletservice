@@ -12,24 +12,24 @@ public class WalletDTO {
     private String userId;
     private List<TransactionDTO> transactions;
 
-    public WalletDTO(BalanceDTO balance, String address, String userId, Wallet wallet) {
+    public WalletDTO(BalanceDTO balance, String userId, Wallet wallet) {
         this.balance = balance;
-        this.address = address;
+        this.address = wallet.currentReceiveAddress().toString();
         this.userId = userId;
         List<TransactionDTO> transactions = new ArrayList<>();
         wallet.getTransactions(false).iterator().forEachRemaining(tx -> transactions.add(
                 new TransactionDTO(
                         tx.getTxId().toString(),
-                        "" + tx.getOutputSum().value,
-                        "" + tx.getFee().value)));
+                        "" + tx.getOutputSum().toFriendlyString(),
+                        "" + ((tx.getFee() != null) ? tx.getFee().toFriendlyString() : "N/A"))));
         this.transactions = transactions;
     }
 
-    public List<TransactionDTO> getTransactions(){
+    public List<TransactionDTO> getTransactions() {
         return transactions;
     }
 
-    public void setTransactions(List<TransactionDTO> transactions){
+    public void setTransactions(List<TransactionDTO> transactions) {
         this.transactions = transactions;
     }
 
