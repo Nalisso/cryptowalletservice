@@ -16,32 +16,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
 public class PaymentResourceImpl implements PaymentResource {
 
     private final BlockchainService blockchainService;
-    private final WalletService walletService;
 
-    public PaymentResourceImpl(BlockchainService blockchainService,
-                               WalletService walletService) {
+    public PaymentResourceImpl(BlockchainService blockchainService) {
         this.blockchainService = blockchainService;
-        this.walletService = walletService;
     }
 
     @Override
     public FinishedPaymentDTO sendBitcoinPayment(PaymentDTO paymentDTO) {
         try {
-            Wallet senderWallet = walletService.getWallet(paymentDTO.getSourceUserId().toLowerCase());
+            Wallet senderWallet = PersonalWallet.load(paymentDTO.getSourceUserId().toLowerCase());
             Address targetAddress = LegacyAddress.fromString(BitcoinNetwork.get(), paymentDTO.getDestinationAddress());
             Coin amount = Coin.parseCoin(paymentDTO.getBitcoins());
             PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId().toLowerCase());
             Wallet.SendResult result = senderWallet.sendCoins(broadcaster, targetAddress, amount);
             PersonalWallet.save(paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
-            broadcaster.stop();
             return getFinishedPaymentDTO(senderWallet, paymentDTO, result.broadcastComplete.get());
         } catch (InsufficientMoneyException e) {
             e.printStackTrace();
