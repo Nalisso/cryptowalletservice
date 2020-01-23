@@ -20,8 +20,9 @@ public class WalletDTO {
         wallet.getTransactions(false).iterator().forEachRemaining(tx -> transactions.add(
                 new TransactionDTO(
                         tx.getTxId().toString(),
-                        "" + tx.getValueSentFromMe(wallet).add(tx.getValueSentToMe(wallet)).toFriendlyString(),
-                        "" + ((tx.getFee() != null) ? tx.getFee().toFriendlyString() : "N/A"))));
+                        tx.getValueSentFromMe(wallet).toFriendlyString(),
+                        tx.getValueSentToMe(wallet).toFriendlyString(),
+                        ((tx.getFee() != null) ? tx.getFee().toFriendlyString() : "N/A"))));
         this.transactions = transactions;
     }
 

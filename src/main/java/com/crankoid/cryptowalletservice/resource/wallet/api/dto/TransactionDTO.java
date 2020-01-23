@@ -2,12 +2,14 @@ package com.crankoid.cryptowalletservice.resource.wallet.api.dto;
 
 public class TransactionDTO {
     private String transactionId;
-    private String output;
+    private String sent;
+    private String received;
     private String fee;
 
-    public TransactionDTO(String transactionId, String output, String fee) {
+    public TransactionDTO(String transactionId, String sent, String received, String fee) {
         this.transactionId = transactionId;
-        this.output = output;
+        this.sent = sent;
+        this.received = received;
         this.fee = fee;
     }
 
@@ -19,12 +21,20 @@ public class TransactionDTO {
         this.transactionId = transactionId;
     }
 
-    public String getOutput() {
-        return output;
+    public String getSent() {
+        return sent;
     }
 
-    public void setOutput(String output) {
-        this.output = output;
+    public void setSent(String sent) {
+        this.sent = sent;
+    }
+
+    public String getReceived() {
+        return received;
+    }
+
+    public void setReceived(String received) {
+        this.received = received;
     }
 
     public String getFee() {
