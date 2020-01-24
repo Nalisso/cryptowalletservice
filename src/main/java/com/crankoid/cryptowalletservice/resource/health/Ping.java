@@ -29,6 +29,7 @@ public class Ping {
                     .createRequest(new URI("http://cryptowalletservice.herokuapp.com"), HttpMethod.GET);
             ClientHttpResponse respone = request.execute();
             System.out.println("Keep alive done, status code is '" + respone.getStatusCode() + "'");
+            
             respone.close();
         } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
