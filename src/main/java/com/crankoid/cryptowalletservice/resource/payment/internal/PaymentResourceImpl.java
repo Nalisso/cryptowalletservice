@@ -34,8 +34,10 @@ public class PaymentResourceImpl implements PaymentResource {
             Address targetAddress = LegacyAddress.fromString(BitcoinNetwork.get(), paymentDTO.getDestinationAddress());
             Coin amount = Coin.parseCoin(paymentDTO.getBitcoins());
             PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId().toLowerCase());
+            broadcaster.start();
             Wallet.SendResult result = senderWallet.sendCoins(broadcaster, targetAddress, amount);
             Transaction transaction = result.broadcastComplete.get();
+            broadcaster.stop();
             System.out.println(transaction.toString());
             PersonalWallet.save(paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
             return getFinishedPaymentDTO(senderWallet, paymentDTO, transaction);
