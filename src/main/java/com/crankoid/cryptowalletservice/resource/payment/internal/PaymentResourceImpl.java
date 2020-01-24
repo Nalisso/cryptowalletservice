@@ -35,8 +35,10 @@ public class PaymentResourceImpl implements PaymentResource {
             Coin amount = Coin.parseCoin(paymentDTO.getBitcoins());
             PeerGroup broadcaster = blockchainService.getPaymentPeerGroup(senderWallet, paymentDTO.getSourceUserId().toLowerCase());
             Wallet.SendResult result = senderWallet.sendCoins(broadcaster, targetAddress, amount);
+            Transaction transaction = result.broadcastComplete.get();
+            System.out.println(transaction.toString());
             PersonalWallet.save(paymentDTO.getSourceUserId().toLowerCase(), senderWallet);
-            return getFinishedPaymentDTO(senderWallet, paymentDTO, result.broadcastComplete.get());
+            return getFinishedPaymentDTO(senderWallet, paymentDTO, transaction);
         } catch (InsufficientMoneyException e) {
             e.printStackTrace();
             throw new InsufficientFunds();
